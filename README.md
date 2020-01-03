@@ -1,7 +1,7 @@
 # personalfinanceapp
 ## how to run it
 
-Run following code other than anaconda installed: \
+Run following code other than anaconda installed: 
 ```
 pip install streamlit
 ```
