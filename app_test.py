@@ -8,6 +8,15 @@ Created on Thu Jan  2 20:20:35 2020
 import streamlit as st
 import numpy as np
 import pandas as pd
+import re
+import json
+import urllib.request
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+
+from currency_converter import CurrencyConverter
+c = CurrencyConverter()
+
 
 def main():
     
@@ -24,7 +33,7 @@ def main():
 #everytime hit clear cache and rerun to check the dataframe for new input
     
 def run_to_add_data():
-    @st.cache
+    @st.cache(allow_output_mutation=True)
     def read_and_clean_data():
         try: 
             df = pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
@@ -41,14 +50,37 @@ def run_to_add_data():
 
 
     newdata = int(st.number_input('Enter the number of new records today:'))
-    
+
     
     for i in range(newdata):
-        dt = st.date_input('Enter today date',key = i)
-        ty = st.text_input('Expense / Income :',key = i)
-        at = st.number_input('how much  ',key = i)
+        dt = st.date_input('Enter the date',key = i)
+        ty = st.selectbox('Expense / Income :',['Expense','Income'],key = i)
+        currency = st.selectbox('currency',['USD','RMB'],key=i)
+        if currency =='RMB':
+            
+            at1 = st.number_input('how much  ',key = i)
+            at = c.convert(at1,'CNY','USD')  #needs to be updated = 2019/12/10
+        
+            
+        else:    
+            at = st.number_input('how much  ',key = i)
+        
+        category = st.selectbox('Big Category',['Food','Transportation','daily goods', 'shopping'])
         cg = st.text_input('specific ones  ',key = i)
-        df1 = pd.DataFrame(data = [[dt,ty,at,cg]],columns = ['Date','Type','Amount','Category'])
+        
+        rollover = st.selectbox('do you want to split this one into different month',['yes','no'],key=i)
+        if (rollover == 'no'):
+            df1 = pd.DataFrame(data = [[dt,ty,at,category,cg]],columns = ['Date','Type','Amount','Category','Description'])
+        else: 
+            df4 = pd.DataFrame(columns = ['Date','Type','Amount','Category','Description'])
+            monthsnum = st.selectbox('how many months?',[2,3,4,5,6,12])
+            df2 = pd.DataFrame(data= [[dt,ty,at/monthsnum,category,cg]],columns = ['Date','Type','Amount','Category','Description'])
+            for i in range(1,monthsnum):
+                df3 = pd.DataFrame(data= [[dt+relativedelta(months=+i),ty,at/monthsnum,category,cg]],columns = ['Date','Type','Amount','Category','Description'])
+                
+                df4 = pd.concat([df3,df4],axis=0).drop_duplicates()
+            df1 = pd.concat([df4,df2],axis=0).drop_duplicates()
+           
         df = pd.concat([df,df1],axis=0).drop_duplicates()
     df
     
@@ -56,7 +88,6 @@ def run_to_add_data():
     st.success('Save to file... Done!(using st.cache)')
 
 def run_the_analysis():
-    @st.cache
     def load_metadata(): 
         return pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
     stabledf= load_metadata()
@@ -65,26 +96,38 @@ def run_the_analysis():
     stabledf= stabledf.sort_index()
     stabledf
     
-    category_filter = st.selectbox('Which ones to include?',stabledf['Category'])
-    filterdata = stabledf.loc[stabledf['Category']==category_filter]
-    st.subheader('alldatamap')
-    st.line_chart(stabledf.groupby(['Category']).mean())
+    
+    monthtoview = st.selectbox('which month to view?',stabledf.index.month.drop_duplicates())
+    
+    st.subheader('What you have spent this month?')
+    
+
+    thismonthdf=stabledf.loc[stabledf.index.month ==monthtoview].groupby(['Category']).sum()
+    thismonthdf
+    st.write('In total is ', thismonthdf.sum()[0])
+
+    
+    st.subheader('in bar chart')
+    st.bar_chart(thismonthdf)
+    
+    category_filter = st.selectbox('Which category to look deeper into?',stabledf['Category'].drop_duplicates())
+    filterdata = stabledf.loc[(stabledf.index.month ==monthtoview) &(stabledf['Category']==category_filter)]
     st.subheader('selected')
     st.bar_chart(filterdata['Amount'])
 
 def run_to_budget():
     st.subheader('per month')
-    @st.cache
-    def read_and_clean_data():
+    @st.cache(allow_output_mutation=True)
+    def read_and_clean_data2():
         try: 
-            df = pd.read_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv')
+            bdf = pd.read_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv')
             st.write('read the file')
         except:
             
-            df = pd.DataFrame(columns = ['StartingDate','Type','Category','Amount'])
+            bdf = pd.DataFrame(columns = ['StartingDate','Type','Category','Amount'])
             st.write('file is empty')
-        return df
-    df = read_and_clean_data()
+        return bdf
+    bdf = read_and_clean_data2()
     newdata = int(st.number_input('Enter the number of new budget lines today:'))
     for i in range(newdata):
         dt = st.date_input('Enter this budget starting date',key = i)
@@ -92,9 +135,11 @@ def run_to_budget():
         cg = st.text_input('specific ones  ',key = i)
         at = st.number_input('how much  ',key = i)
         df1 = pd.DataFrame(data = [[dt,ty,at,cg]],columns = ['StartingDate','Type','Category','Amount'])
-        df = pd.concat([df,df1],axis=0).drop_duplicates()
-    df.to_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv',index=False)
+        bdf = pd.concat([bdf,df1],axis=0).drop_duplicates()
+    
+    bdf.to_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv',index=False)
     st.success('Save to file... Done!(using st.cache)')
+    bdf
     
 if __name__ == "__main__":
     main()
