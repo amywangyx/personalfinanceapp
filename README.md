@@ -20,7 +20,7 @@ otherwise this time's data will be lost \
 alternative way:\
 please copy paste the myrecord.csv file to make sure your data is okay 
 
-other improvements to make: \
+next step improvements to make: \
 align budgeting lines with spending on the same histograms \
 algorithms to predict how much you spent this month( abnormal / normal) \
 better visualization for categorizing changes and tagging 

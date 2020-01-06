@@ -127,6 +127,12 @@ def run_the_analysis():
     filterdata = stabledf.loc[(stabledf.index.month ==monthtoview) &(stabledf['Category']==category_filter)]
     st.subheader('selected')
     st.bar_chart(filterdata['Amount'])
+    
+    st.subheader('Compare with budgeting analysis')
+    def load_metabudget(): 
+        return pd.read_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv')
+    budgetdf = load_metabudget()
+    budgetdf
 
 def run_to_budget():
     st.subheader('per month')
