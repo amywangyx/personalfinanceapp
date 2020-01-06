@@ -17,6 +17,8 @@ from dateutil.relativedelta import relativedelta
 from currency_converter import CurrencyConverter
 c = CurrencyConverter()
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 def main():
     
@@ -105,10 +107,20 @@ def run_the_analysis():
     thismonthdf=stabledf.loc[stabledf.index.month ==monthtoview].groupby(['Category']).sum()
     thismonthdf
     st.write('In total is ', thismonthdf.sum()[0])
-
     
-    st.subheader('in bar chart')
-    st.bar_chart(thismonthdf)
+#    #------
+#    print(thismonthdf[thismonthdf.index=='Food'].values)
+#    comparison_labels = ['Food','daily goods','Transportaion']
+#    comparison_values = [thismonthdf[thismonthdf.index==comparison_labels[0]].values,thismonthdf[thismonthdf.index==comparison_labels[1]].values,thismonthdf[thismonthdf.index==comparison_labels[2]].values]
+#    comparison_values[0]
+#    fig = go.Figure(data=[go.Pie(labels=['Food','daily goods','Transportaion'], values=[32,24,35])])
+#    st.plotly_chart(fig) 
+#    
+    
+    import plotly.express as px
+    fig = px.pie(thismonthdf,values = 'Amount',names = thismonthdf.index)
+    st.plotly_chart(fig)
+    
     
     category_filter = st.selectbox('Which category to look deeper into?',stabledf['Category'].drop_duplicates())
     filterdata = stabledf.loc[(stabledf.index.month ==monthtoview) &(stabledf['Category']==category_filter)]

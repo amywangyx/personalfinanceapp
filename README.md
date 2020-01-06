@@ -4,8 +4,10 @@
 Run following code other than anaconda installed: 
 ```
 pip install streamlit
+pip install plotly
 streamlit run app_test.py
 ```
+plotly might need to updated in the conda instruction, so check their official websites \
 You might need to change the directory path to make sure the directory is correctly saved \
 (subject to fix the problem) 
 
@@ -16,7 +18,7 @@ clear cache and rerun the entire thing in the upper right corner\
 otherwise this time's data will be lost \
 \
 alternative way:\
-please copy paste the myrecord.csv file to make sure your data is okay \
+please copy paste the myrecord.csv file to make sure your data is okay 
 
 other improvements to make: \
 align budgeting lines with spending on the same histograms \
