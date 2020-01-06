@@ -57,6 +57,7 @@ def run_to_add_data():
     for i in range(newdata):
         dt = st.date_input('Enter the date',key = i)
         ty = st.selectbox('Expense / Income :',['Expense','Income'],key = i)
+        
         currency = st.selectbox('currency',['USD','RMB'],key=i)
         if currency =='RMB':
             
@@ -67,7 +68,7 @@ def run_to_add_data():
         else:    
             at = st.number_input('how much  ',key = i)
         
-        category = st.selectbox('Big Category',['Food','Transportation','daily goods', 'shopping'])
+        category = st.selectbox('Big Category',['Food','Transportation','daily goods', 'shopping','n/a'])
         cg = st.text_input('specific ones  ',key = i)
         
         rollover = st.selectbox('do you want to split this one into different month',['yes','no'],key=i)
@@ -106,7 +107,7 @@ def run_the_analysis():
 
     thismonthdf=stabledf.loc[stabledf.index.month ==monthtoview].groupby(['Category']).sum()
     thismonthdf
-    st.write('In total is ', thismonthdf.sum()[0])
+    st.write('In total is $', round(thismonthdf.sum()[0],2))
     
 #    #------
 #    print(thismonthdf[thismonthdf.index=='Food'].values)
@@ -129,29 +130,60 @@ def run_the_analysis():
 
 def run_to_budget():
     st.subheader('per month')
+    
     @st.cache(allow_output_mutation=True)
-    def read_and_clean_data2():
+    def read_and_clean_data():
         try: 
-            bdf = pd.read_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv')
+            df = pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
             st.write('read the file')
+    
         except:
             
-            bdf = pd.DataFrame(columns = ['StartingDate','Type','Category','Amount'])
+            df = pd.DataFrame(columns = ['Date','Type','Amount','Category'])
             st.write('file is empty')
-        return bdf
-    bdf = read_and_clean_data2()
-    newdata = int(st.number_input('Enter the number of new budget lines today:'))
-    for i in range(newdata):
-        dt = st.date_input('Enter this budget starting date',key = i)
-        ty = st.text_input('Expense / Income :',key = i)
-        cg = st.text_input('specific ones  ',key = i)
-        at = st.number_input('how much  ',key = i)
-        df1 = pd.DataFrame(data = [[dt,ty,at,cg]],columns = ['StartingDate','Type','Category','Amount'])
-        bdf = pd.concat([bdf,df1],axis=0).drop_duplicates()
+        return df
     
-    bdf.to_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv',index=False)
-    st.success('Save to file... Done!(using st.cache)')
+    bdf = read_and_clean_data()
+    
+    bdf['Date'] = pd.to_datetime(bdf['Date'])
+    bdf = bdf.set_index('Date')
+    bdf= bdf.sort_index()
+    
+    st.subheader('check the dataframe again')
     bdf
+    
+    st.subheader('Income subsection')
+    incomedf = bdf.loc[bdf['Type']=='Income']
+    incomedf
+    
+    monthtoview = st.selectbox('which month to view?',incomedf.index.month.drop_duplicates())
+    thismonthbudget = incomedf.loc[incomedf.index.month ==monthtoview].sum()['Amount']
+    st.write('This month you have budget of :',round(thismonthbudget,2))
+    
+    mybudgetdf = pd.DataFrame(columns = ['Category','Amount'])
+    category1 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key =1)
+    st.subheader('how do you want to split your budget')
+    value1 = st.selectbox('Budget Range',np.arange(0, thismonthbudget, 1),key=1)
+    df1= pd.DataFrame(data = [[category1,value1]],columns = ['Category','Amount'])
+    mybudgetdf = pd.concat([mybudgetdf,df1],axis=0).drop_duplicates()
+    
+    category2 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key=2)
+    st.subheader('how do you want to split your budget')
+    value2 = st.selectbox('Budget Range',np.arange(0, thismonthbudget-value1, 1),key=2)
+    df2= pd.DataFrame(data = [[category2,value2]],columns = ['Category','Amount'])
+    mybudgetdf = pd.concat([mybudgetdf,df2],axis=0).drop_duplicates()
+    
+    category3 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key=3)
+    st.subheader('how do you want to split your budget')
+    value3 = st.selectbox('Budget Range',np.arange(0, thismonthbudget-value1-value2, 1),key=3)
+    df3= pd.DataFrame(data = [[category3,value3]],columns = ['Category','Amount'])
+    mybudgetdf = pd.concat([mybudgetdf,df3],axis=0).drop_duplicates()
+    
+    st.subheader('YOU LEFT WITH: ')
+    st.write(round(thismonthbudget-value1-value2-value3))
+    mybudgetdf.to_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv',index=False)
+    st.success('Save to file... Done!(using st.cache)')
+    mybudgetdf
     
 if __name__ == "__main__":
     main()
