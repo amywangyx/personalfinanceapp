@@ -21,6 +21,6 @@ alternative way:\
 please copy paste the myrecord.csv file to make sure your data is okay 
 
 next step improvements to make: \
-align budgeting lines with spending on the same histograms \
+
 algorithms to predict how much you spent this month( abnormal / normal) \
 better visualization for categorizing changes and tagging 
