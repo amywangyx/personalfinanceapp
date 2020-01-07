@@ -14,9 +14,8 @@ import urllib.request
 from datetime import datetime, timedelta,date
 from dateutil.relativedelta import relativedelta
 
-from currency_converter import CurrencyConverter
-c = CurrencyConverter()
-
+from forex_python.converter import CurrencyRates
+c = CurrencyRates()
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -76,7 +75,7 @@ def run_to_add_data():
         if currency =='RMB':
             
             at1 = st.number_input('how much  ',key = i)
-            at = c.convert(at1,'CNY','USD')  #needs to be updated = 2019/12/10
+            at = c.convert('CNY','USD',at1)  #needs to be updated = 2019/12/10
         
             
         else:    
