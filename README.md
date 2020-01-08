@@ -11,6 +11,10 @@ so that budgeting page will not report error(logic: you must have income to get 
 3. in the budgeting section, add one section (not n/a) to show you have budgeted couple things\
 4. then congrats, in the run analysis section, you can see how you've done compared with what you should've done!
 
+work to do in this app: 
+where to store the data??? (every account different login? why same network share the data?) 
+loggin issue
+
 _____________________________________
 
 Run following code other than anaconda installed: 
