@@ -13,11 +13,15 @@ import json
 import urllib.request
 from datetime import datetime, timedelta,date
 from dateutil.relativedelta import relativedelta
-
+from streamlit import caching
 from forex_python.converter import CurrencyRates
 c = CurrencyRates()
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
+import os
+path = os.getcwd()
+
 
 def last_day_of_month(any_day):
     next_month = any_day.replace(day=28) + datetime.timedelta(days=4)  # this will never fail
@@ -44,14 +48,14 @@ def run_to_initialize():
     if st.checkbox('Please be aware that all data are offline'):
         bankaccount = st.number_input('how much')
         bankdf = pd.DataFrame(data = [bankaccount],columns = ['initialamount'])
-        bankdf.to_csv('C:\\Users\\Amy\\Desktop\\mybank.csv',index=False)
+        bankdf.to_csv(os.path.join(path,r'mybank.csv'),index=False)
     st.success('Save to file... Done!(using st.cache)')
     
 def run_to_add_data():
     @st.cache(allow_output_mutation=True)
     def read_and_clean_data():
         try: 
-            df = pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
+            df = pd.read_csv(os.path.join(path,r'myrecord.csv'))
             st.write('read the file')
     
         except:
@@ -63,7 +67,7 @@ def run_to_add_data():
     df = read_and_clean_data()
     
 
-
+    st.subheader("if enter income, choose n/a for the category")
     newdata = int(st.number_input('Enter the number of new records today:'))
 
     
@@ -100,12 +104,14 @@ def run_to_add_data():
         df = pd.concat([df,df1],axis=0).drop_duplicates()
     df
     
-    df.to_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv',index=False)
+    df.to_csv(os.path.join(path,r'myrecord.csv'),index=False)
+    st.write(path)
     st.success('Save to file... Done!(using st.cache)')
 
 def run_the_analysis():
+    caching.clear_cache()
     def load_metadata(): 
-        return pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
+        return pd.read_csv(os.path.join(path,r'myrecord.csv'))
     stabledf= load_metadata()
     stabledf['Date'] = pd.to_datetime(stabledf['Date'])
     stabledf = stabledf.set_index('Date')
@@ -144,7 +150,7 @@ def run_the_analysis():
     
     st.subheader('Compare with budgeting analysis')
     def load_metabudget(): 
-        return pd.read_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv')
+        return pd.read_csv(os.path.join(path,r'mybudget.csv'))
     budgetdf = load_metabudget()
 
     analysisdf = thismonthdf.merge(budgetdf,left_index =True, right_on = 'Category',suffixes = ('_spent','_budgeted'))
@@ -177,10 +183,11 @@ def run_the_analysis():
 def run_to_budget():
     st.subheader('per month')
     
+    caching.clear_cache()
     @st.cache(allow_output_mutation=True)
     def read_and_clean_data():
         try: 
-            df = pd.read_csv('C:\\Users\\Amy\\Desktop\\myrecord.csv')
+            df = pd.read_csv(os.path.join(path,r'myrecord.csv'))
             st.write('read the file')
     
         except:
@@ -192,7 +199,7 @@ def run_to_budget():
     @st.cache(allow_output_mutation=True)
     def read_bank_statement():
         try: 
-            df = pd.read_csv('C:\\Users\\Amy\\Desktop\\mybank.csv')
+            df = pd.read_csv(os.path.join(path,r'mybank.csv'))
             st.write('read the file')
     
         except:
@@ -219,6 +226,7 @@ def run_to_budget():
     thismonthbudget = incomedf.loc[incomedf.index.month ==monthtoview].sum()['Amount']
     st.write('This month you have budget of :',round(thismonthbudget,2))
     
+    
     usebankaccount = st.selectbox('do you want to use a part of your bank saving?', ['yes','no'])
     if usebankaccount =='yes':
         trueamount = st.slider('by how much',0.,float(bankdf['initialamount'][0]),step = 1.0)
@@ -228,40 +236,34 @@ def run_to_budget():
         thismonthbudgetfinal = thismonthbudget
         st.write('This month final budget is :',round(thismonthbudgetfinal,2))
     
+    
+    num = bdf['Category'].drop_duplicates().count()
     mybudgetdf = pd.DataFrame(columns = ['Category','Amount'])
-    category1 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key =1)
-    st.subheader('how do you want to split your budget')
     
-    value1 = st.slider('Budget Range',0.,float(thismonthbudgetfinal),step = 1.0,key=1)
-
-    df1= pd.DataFrame(data = [[category1,value1]],columns = ['Category','Amount'])
-    mybudgetdf = pd.concat([mybudgetdf,df1],axis=0).drop_duplicates()
+    num = bdf['Category'].drop_duplicates().count()
+    mybudgetdf = pd.DataFrame(columns = ['Category','Amount'])
     
-    category2 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key=2)
-    st.subheader('how do you want to split your budget')
-    value2 = st.slider('Budget Range',0.,float(thismonthbudgetfinal-value1),step = 1.0,key=2)
+    for i in range(0,num):
+        category = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key =i)
+        st.subheader('how do you want to split your budget')
+        if (mybudgetdf['Amount'].cumsum().count()==0):
+            previoussum=0
+        else:
+            st.write(mybudgetdf['Amount'].cumsum())
+            previoussum = mybudgetdf['Amount'].cumsum().iloc[i-1]
+            
+        value = st.slider('Budget Range',0.,float(thismonthbudgetfinal-previoussum),step = 1.0,key=i)
 
-    df2= pd.DataFrame(data = [[category2,value2]],columns = ['Category','Amount'])
-    mybudgetdf = pd.concat([mybudgetdf,df2],axis=0).drop_duplicates()
-    
-    category3 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key=3)
-    st.subheader('how do you want to split your budget')
-    value3 = st.slider('Budget Range',0.,float(thismonthbudgetfinal-value1-value2),step = 1.0,key=3)
-
-    df3= pd.DataFrame(data = [[category3,value3]],columns = ['Category','Amount'])
-    mybudgetdf = pd.concat([mybudgetdf,df3],axis=0).drop_duplicates()
-    
-    category4 = st.selectbox('For this category',bdf['Category'].drop_duplicates(),key=4)
-    st.subheader('how do you want to split your budget')
-    value4 = st.slider('Budget Range',0.,float(thismonthbudgetfinal-value1-value2-value3),step = 1.0,key=4)
-
-    df4= pd.DataFrame(data = [[category4,value4]],columns = ['Category','Amount'])
-    mybudgetdf = pd.concat([mybudgetdf,df4],axis=0).drop_duplicates()
+        df1= pd.DataFrame(data = [[category,value]],columns = ['Category','Amount'])
+        mybudgetdf = pd.concat([mybudgetdf,df1],axis=0).drop_duplicates()
+        st.write('for i =',i,'df is', mybudgetdf)
+        
+        
     
     st.subheader('YOU LEFT WITH: ')
-    st.write(round(thismonthbudgetfinal-value1-value2-value3-value4+bankdf['initialamount'][0]-trueamount))
+    st.write(round(thismonthbudgetfinal-mybudgetdf['Amount'].cumsum().iloc[i]+bankdf['initialamount'][0]-trueamount))
 
-    mybudgetdf.to_csv('C:\\Users\\Amy\\Desktop\\mybudget.csv',index=False)
+    mybudgetdf.to_csv(os.path.join(path,r'mybudget.csv'),index=False)
     st.success('Save to file... Done!(using st.cache)')
     mybudgetdf
     
