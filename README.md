@@ -15,6 +15,19 @@ work to do in this app:
 where to store the data??? (every account different login? why same network share the data?) 
 loggin issue
 
+to open the app website myself
+cd to the directory
+heroku login 
+
+git checkout master
+git add .
+git commit -m "message"
+git push heroku master
+
+heroku ps:scale web=1
+heroku open
+_____________________________________
+
 _____________________________________
 
 Run following code other than anaconda installed: 
