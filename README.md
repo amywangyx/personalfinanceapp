@@ -15,6 +15,11 @@ work to do in this app:
 where to store the data??? (every account different login? why same network share the data?) 
 loggin issue
 
+bugs to fix: 
+1. out of bounds for analysis page when there is only one category needed : warning section
+  IndexError: index 0 is out of bounds for axis 0 with size 0
+2. budgeting page shouldn't according just to what categories entered in the adding data section 
+
 to open the app website myself
 cd to the directory
 heroku login 
